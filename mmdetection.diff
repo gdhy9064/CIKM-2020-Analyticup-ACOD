@@ -1,0 +1,93 @@
+
+diff -r mmdetection/mmdet/core/post_processing/bbox_nms.py mmdetection_modified/mmdet/core/post_processing/bbox_nms.py
+2a3
+> import torchvision
+50c51,53
+<     dets, keep = batched_nms(bboxes, scores, labels, nms_cfg)
+---
+>     # dets, keep = batched_nms(bboxes, scores, labels, nms_cfg)
+> 
+>     keep = torchvision.ops.nms(bboxes, scores, 0.5)
+53c56
+<         dets = dets[:max_num]
+---
+>         # dets = dets[:max_num]
+56c59,62
+<     return dets, labels[keep]
+---
+> 
+>     return torch.cat([bboxes[keep], scores[keep, None]], dim=-1), labels[keep]
+> 
+>     # return dets, labels[keep]
+diff -r mmdetection/mmdet/models/backbones/resnet.py mmdetection_modified/mmdet/models/backbones/resnet.py
+525a526,536
+>         class MaxPoolGrad2d(nn.Module):
+>             def __init__(self, **kargs):
+>                 super().__init__()
+>                 self.stride = kargs['stride']
+>                 self.maxpool = nn.MaxPool2d(**kargs)
+>                 self.avgpool = nn.AvgPool2d(**kargs)
+> 
+>             def forward(self,x):
+>                 y = self.maxpool(x)
+>                 z = self.avgpool(x)
+>                 return y.detach() - z.detach() * self.stride ** 2 + z * self.stride ** 2
+571c582,583
+<         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+---
+>         # self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+>         self.maxpool = MaxPoolGrad2d(kernel_size=3, stride=2, padding=1)
+diff -r mmdetection/mmdet/models/dense_heads/anchor_head.py mmdetection_modified/mmdet/models/dense_heads/anchor_head.py
+565c565
+<                 cls_scores[i][img_id].detach() for i in range(num_levels)
+---
+>                 cls_scores[i][img_id] for i in range(num_levels)
+568c568
+<                 bbox_preds[i][img_id].detach() for i in range(num_levels)
+---
+>                 bbox_preds[i][img_id] for i in range(num_levels)
+diff -r mmdetection/mmdet/models/dense_heads/rpn_head.py mmdetection_modified/mmdet/models/dense_heads/rpn_head.py
+9a10
+> import torchvision
+167,168c168,175
+<         dets, keep = batched_nms(proposals, scores, ids, nms_cfg)
+<         return dets[:cfg.nms_post]
+---
+> 
+>         # dets, keep = batched_nms(proposals, scores, ids, nms_cfg)
+> 
+>         keep = torchvision.ops.nms(proposals, scores, cfg.nms_thr)
+> 
+>         return proposals[keep[:cfg.nms_post]]
+> 
+>         # return dets[:cfg.nms_post]
+diff -r mmdetection/mmdet/models/dense_heads/rpn_test_mixin.py mmdetection_modified/mmdet/models/dense_heads/rpn_test_mixin.py
+38c38
+<         return proposal_list
+---
+>         return proposal_list, rpn_outs
+diff -r mmdetection/mmdet/models/detectors/two_stage.py mmdetection_modified/mmdet/models/detectors/two_stage.py
+194c194
+<             proposal_list = self.rpn_head.simple_test_rpn(x, img_metas)
+---
+>             proposal_list, rpn_outs = self.rpn_head.simple_test_rpn(x, img_metas)
+198,199c198,199
+<         return proposal_list, self.roi_head.simple_test(
+<             x, proposal_list, img_metas, rescale=rescale)
+---
+>         return self.roi_head.simple_test(
+>             x, proposal_list, img_metas, rescale=rescale), rpn_outs, proposal_list
+diff -r mmdetection/mmdet/models/roi_heads/standard_roi_head.py mmdetection_modified/mmdet/models/roi_heads/standard_roi_head.py
+146c146
+<         return bbox_results
+---
+>         return bbox_results, bbox_feats
+diff -r mmdetection/mmdet/models/roi_heads/test_mixins.py mmdetection_modified/mmdet/models/roi_heads/test_mixins.py
+60c60
+<         bbox_results = self._bbox_forward(x, rois)
+---
+>         bbox_results, bbox_feats = self._bbox_forward(x, rois)
+71c71
+<         return det_bboxes, det_labels, bboxes, scores
+---
+>         return det_bboxes, det_labels, proposals, scores
