@@ -1,4 +1,4 @@
-# The Solution of Alibaba-Tsinghua Adversarial Challengeon Object Detection
+# The Solution of Alibaba-Tsinghua Adversarial Challenge on Object Detection
 ## Introduction
 This repository contains the solution of [Alibaba-Tsinghua Adversarial Challenge on Object Detection in CIKM 2020 Analyticup](http://www.cikm2020.org/adversarial-challenge-on-object-detection/).
 
@@ -7,9 +7,9 @@ This repository contains the solution of [Alibaba-Tsinghua Adversarial Challenge
 - mmdetection: Modified source of mmdetection, including the specified Faster-RCNN. 
 - eval_code.diff: A file shows the differences between original source and modified source in `eval_code`. 
 - mmdetection.diff: A file shows the differences between original source and modified source in `mmdetection`. 
-- train.py: Adversarial training with selected parameters.  
+- train.py: Adversarial training with specified parameters.  
 - metrics.py: Evaluate the attack score of Faster-RCNN and YOLO-V4, generate the files required by `fusion.py`.  
-- fusion.py: Make a fusion of results with selected parameters for higher score.
+- fusion.py: Make a fusion of results with specified parameters for higher score.
 
 
 
